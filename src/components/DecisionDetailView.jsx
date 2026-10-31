@@ -1,14 +1,29 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Calendar, ArrowRight, ExternalLink, Video, CheckCircle, Circle, Repeat, Clock, Layers } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  Calendar, 
+  ArrowRight, 
+  ExternalLink, 
+  Video, 
+  CheckCircle, 
+  Circle, 
+  Repeat, 
+  Clock, 
+  Layers,
+  Sparkles,
+  Cpu
+} from 'lucide-react';
 import confetti from 'canvas-confetti';
+import SpeechDisfluencyDiff from './SpeechDisfluencyDiff';
+import DeliveryRiskRadar from './DeliveryRiskRadar';
 
 export default function DecisionDetailView({ 
   onBack, 
   onReplaceEarlierDecision, 
   onKeepBoth, 
-  onRevisitLater,
-  isResolved: _isResolved = false
+  onRevisitLater
 }) {
+  const [showSpeechDiff, setShowSpeechDiff] = useState(false);
   const [tasks, setTasks] = useState([
     {
       id: 'task-1',
@@ -16,7 +31,9 @@ export default function DecisionDetailView({
       owner: 'Priya',
       avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80',
       dueDate: 'Nov 20',
+      deadline: 'Nov 20',
       status: 'In Progress',
+      commitment: 'Firm',
       completed: false
     },
     {
@@ -25,7 +42,9 @@ export default function DecisionDetailView({
       owner: 'Dev',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
       dueDate: 'Nov 21',
+      deadline: 'Nov 21',
       status: 'To Do',
+      commitment: 'Firm',
       completed: false
     },
     {
@@ -34,7 +53,9 @@ export default function DecisionDetailView({
       owner: 'Alex',
       avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80',
       dueDate: 'Nov 22',
+      deadline: 'Nov 22',
       status: 'To Do',
+      commitment: 'Tentative',
       completed: false
     }
   ]);
@@ -63,8 +84,10 @@ export default function DecisionDetailView({
     onReplaceEarlierDecision();
   };
 
+  const spokenTranscriptSample = "Sarah: Honestly, backend isn't ready. Um, like, looking at our load tests, there is no way we can hit November 15... wait no, let me rephrase that, let's move it one week to November 22.";
+
   return (
-    <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6">
+    <div className="max-w-6xl mx-auto py-6 sm:py-8 px-4 sm:px-6 animate-in fade-in duration-300">
       
       {/* Back Link */}
       <button
@@ -83,6 +106,12 @@ export default function DecisionDetailView({
           
           {/* Main Title & Subtitle */}
           <div>
+            <div className="flex items-center space-x-2 mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-terracotta-100 text-terracotta-700 border border-terracotta-200">
+                Decision Conflict #14
+              </span>
+              <span className="text-xs text-charcoal-50 font-mono">Sprint 14 Sync</span>
+            </div>
             <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight text-charcoal-900 leading-none">
               Launch date
             </h1>
@@ -132,28 +161,48 @@ export default function DecisionDetailView({
           </div>
 
           {/* Source Quote Callout */}
-          <div className="rounded-2xl bg-terracotta-50/70 border-l-4 border-terracotta-500 p-4 sm:p-5 flex items-start space-x-3.5 shadow-sm">
-            <img 
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80" 
-              alt="Sarah" 
-              className="w-10 h-10 rounded-full object-cover shrink-0 border border-terracotta-200 mt-0.5"
-            />
-            <div className="space-y-1">
-              <blockquote className="font-serif italic text-base sm:text-lg text-charcoal-900 leading-snug">
-                “Backend isn’t ready. Let’s move it one week.”
-              </blockquote>
-              <div className="text-xs text-charcoal-100 flex flex-wrap items-center gap-1.5">
-                <span className="font-semibold text-charcoal-900">Sarah</span>
-                <span>•</span>
-                <span>10:24 AM, Nov 14</span>
-                <span>•</span>
-                <span className="inline-flex items-center space-x-1 text-charcoal-900 underline underline-offset-2 decoration-charcoal-50 hover:text-terracotta-600 cursor-pointer">
-                  <span>From Sprint 12 Sync</span>
-                  <ExternalLink className="w-3 h-3 ml-0.5" />
-                </span>
+          <div className="rounded-2xl bg-terracotta-50/70 border-l-4 border-terracotta-500 p-4 sm:p-5 flex items-start justify-between gap-3 shadow-sm">
+            <div className="flex items-start space-x-3.5">
+              <img 
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80" 
+                alt="Sarah" 
+                className="w-10 h-10 rounded-full object-cover shrink-0 border border-terracotta-200 mt-0.5"
+              />
+              <div className="space-y-1">
+                <blockquote className="font-serif italic text-base sm:text-lg text-charcoal-900 leading-snug">
+                  “Backend isn’t ready. Let’s move it one week.”
+                </blockquote>
+                <div className="text-xs text-charcoal-100 flex flex-wrap items-center gap-1.5">
+                  <span className="font-semibold text-charcoal-900">Sarah</span>
+                  <span>•</span>
+                  <span>10:24 AM, Nov 14</span>
+                  <span>•</span>
+                  <span className="inline-flex items-center space-x-1 text-charcoal-900 underline underline-offset-2 decoration-charcoal-50 hover:text-terracotta-600 cursor-pointer">
+                    <span>From Sprint 12 Sync</span>
+                    <ExternalLink className="w-3 h-3 ml-0.5" />
+                  </span>
+                </div>
               </div>
             </div>
+
+            {/* Toggle Wispr Disfluency Diff Button */}
+            <button
+              onClick={() => setShowSpeechDiff(!showSpeechDiff)}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 flex items-center space-x-1 shrink-0 transition-colors shadow-sm"
+              title="Click to view Wispr Flow speech disfluency analysis"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+              <span>{showSpeechDiff ? 'Hide Diff' : 'Speech Diff'}</span>
+            </button>
           </div>
+
+          {/* 1. Speech Disfluency Diff Visualizer (Wispr Flow Native) */}
+          {showSpeechDiff && (
+            <SpeechDisfluencyDiff transcript={spokenTranscriptSample} />
+          )}
+
+          {/* 2. Delivery Risk & Capacity Friction Radar */}
+          <DeliveryRiskRadar actionItems={tasks} />
 
           {/* Follow-up Tasks (3) */}
           <div className="pt-2">
@@ -176,6 +225,7 @@ export default function DecisionDetailView({
                     <th className="py-2.5 px-4 font-medium">Task</th>
                     <th className="py-2.5 px-4 font-medium">Owner</th>
                     <th className="py-2.5 px-4 font-medium">Due date</th>
+                    <th className="py-2.5 px-4 font-medium">Commitment</th>
                     <th className="py-2.5 px-4 font-medium">Status</th>
                   </tr>
                 </thead>
@@ -209,6 +259,15 @@ export default function DecisionDetailView({
                       </td>
                       <td className="py-3 px-4 text-charcoal-100 font-mono">
                         {task.dueDate}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                          task.commitment === 'Firm' 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {task.commitment}
+                        </span>
                       </td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
@@ -257,6 +316,17 @@ export default function DecisionDetailView({
               <span className="font-bold text-emerald-700">Nov 22</span>
             </div>
 
+            {/* Semantic Drift Index */}
+            <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center space-x-1.5 text-charcoal-50 text-xs">
+                <Cpu className="w-3.5 h-3.5 text-purple-600" />
+                <span>Schedule Drift</span>
+              </div>
+              <span className="text-xs font-mono font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                +7 Days (14% variance)
+              </span>
+            </div>
+
             <hr className="border-cream-200 my-2" />
 
             {/* Source Meeting */}
@@ -277,7 +347,7 @@ export default function DecisionDetailView({
             <div className="flex items-center justify-between">
               <span className="text-charcoal-100">Confidence level</span>
               <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EAF5EC] text-[#15803D]">
-                High
+                High (98% Intent)
               </span>
             </div>
           </div>
