@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, TrendingUp } from 'lucide-react';
 
 export default function DeliveryRiskRadar({ actionItems = [] }) {
+  actionItems = actionItems.filter(item => item.reviewStatus !== 'rejected');
   if (!actionItems || actionItems.length === 0) return null;
 
   let lowRiskCount = 0;
@@ -44,17 +45,17 @@ export default function DeliveryRiskRadar({ actionItems = [] }) {
             <h4 className="text-xs font-bold text-charcoal-900 flex items-center">
               <span>Delivery Risk & Execution Reliability Radar</span>
               <span className="ml-2 text-[10px] font-semibold px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                AI Risk Model
+                Rule-based checks
               </span>
             </h4>
             <p className="text-[11px] text-charcoal-50">
-              Linguistic commitment analysis & workload distribution assessment.
+              Checks for missing owners, deadlines, and tentative commitments.
             </p>
           </div>
         </div>
 
         <div className="flex items-center space-x-2">
-          <span className="text-xs text-charcoal-50">Sprint On-Track Index:</span>
+          <span className="text-xs text-charcoal-50">Commitment completeness:</span>
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
             onTrackScore >= 80 
               ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
@@ -62,7 +63,7 @@ export default function DeliveryRiskRadar({ actionItems = [] }) {
               ? 'bg-amber-100 text-amber-800 border border-amber-300'
               : 'bg-red-100 text-red-800 border border-red-300'
           }`}>
-            {onTrackScore}% Projected Confidence
+            {onTrackScore}/100 heuristic score
           </span>
         </div>
       </div>
@@ -71,7 +72,7 @@ export default function DeliveryRiskRadar({ actionItems = [] }) {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start space-x-2 text-xs text-amber-900">
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <div>
-            <strong className="font-semibold">Capacity Warning Detected:</strong>{' '}
+            <strong className="font-semibold">Multiple commitments:</strong>{' '}
             {overloadedOwners.map(([name, count]) => `${name} (${count} commitments)`).join(', ')}{' '}
             has multiple deliverables assigned in this single meeting. Consider load-balancing to avoid delivery slippage.
           </div>

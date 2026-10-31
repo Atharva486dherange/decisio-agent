@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Inbox, Calendar, BookOpen, CheckCircle2, Database, HelpCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { Home, Inbox, Calendar, BookOpen, CheckCircle2, Database, HelpCircle, Sparkles, ArrowRight, Globe } from 'lucide-react';
 
 export default function Sidebar({ 
   activeNav, 
@@ -8,6 +8,7 @@ export default function Sidebar({
   onOpenWisprModal 
 }) {
   const navItems = [
+    { id: 'landing', label: 'Product tour', icon: Globe },
     { id: 'home', label: 'Home', icon: Home },
     { id: 'inbox', label: 'Inbox', icon: Inbox, badge: inboxCount },
     { id: 'meetings', label: 'Meetings', icon: Calendar },

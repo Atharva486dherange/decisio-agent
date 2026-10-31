@@ -6,13 +6,13 @@ import WorkspaceHome from './components/WorkspaceHome';
 import TopBar from './components/TopBar';
 import VoiceIntake from './components/VoiceIntake';
 import MeetingReview from './components/MeetingReview';
-import DecisionDetailView from './components/DecisionDetailView';
 import DecisionMap from './components/DecisionMap';
 import ExecutionBoard from './components/ExecutionBoard';
 import DecisionTimeline from './components/DecisionTimeline';
 import VoiceFloatingBar from './components/VoiceFloatingBar';
 import WisprModal from './components/WisprModal';
 import ExportModal from './components/ExportModal';
+import LandingPage from './components/LandingPage';
 import { initialLedger, demoScenarios } from './data/seedData';
 import { checkServerHealth, extractMeetingData, executeVoiceCommand } from './services/api';
 import { syncDecisionToSupabase, syncTasksToSupabase } from './services/supabaseClient';
@@ -49,7 +49,17 @@ export default function App() {
   }, []);
   
   const reminderCount = dueReminders(workspace.tasks, clock).length;
-  const [activeNav, setActiveNav] = useState('inbox');
+  const [activeNav, setActiveNav] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const h = (window.location.hash || '').replace('#', '').toLowerCase();
+      const s = new URLSearchParams(window.location.search);
+      const view = s.get('view');
+      const validViews = ['home', 'inbox', 'meetings', 'execution', 'planning', 'memory', 'decision_log'];
+      if (view && validViews.includes(view)) return view;
+      if (validViews.includes(h)) return h;
+    }
+    return 'landing';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isProcessingVoiceCommand, setIsProcessingVoiceCommand] = useState(false);
@@ -105,7 +115,7 @@ export default function App() {
         resolutions: {} 
       })); 
       setFeedback(draft.warning || (draft.mode === 'offline-rules' ? 'Limited offline rules used. Review every proposal against the transcript.' : 'AI proposals ready for review.')); 
-      setActiveNav('review'); 
+      setActiveNav('inbox');
     }
     catch (e) { setError(e.message); } 
     finally { setIsProcessing(false); }
@@ -131,26 +141,11 @@ export default function App() {
     } catch (e) { setError(e.message); }
   }
 
-  function handleReplaceDecisionDetail() {
-    setWorkspace(w => {
-      const updatedLedger = w.ledger.map(item => {
-        if (item.topic === 'Release Milestone' || item.decision.includes('Nov 15')) {
-          const sup = { ...item, status: 'superseded', supersededReason: 'Superseded by team consensus: Public launch rescheduled to Nov 22.' };
-          syncDecisionToSupabase(sup);
-          return sup;
-        }
-        return item;
-      });
-      return { ...w, ledger: updatedLedger };
-    });
-    setFeedback('Replaced earlier decision: Launch date firmly updated to Nov 22.');
-  }
-
   async function voice(command) {
     if (isProcessingVoiceCommand || isProcessing) return;
     setIsProcessingVoiceCommand(true); setError('');
     try {
-      const reviewing = activeNav === 'review' && workspace.draft;
+      const reviewing = ['inbox', 'review'].includes(activeNav) && workspace.draft;
       const result = await executeVoiceCommand(command, reviewing ? workspace.draft.actionItems : workspace.tasks);
       if (result.mutations.length) {
         setWorkspace(w => reviewing 
@@ -163,12 +158,30 @@ export default function App() {
     finally { setIsProcessingVoiceCommand(false); }
   }
 
+  if (activeNav === 'landing') {
+    return (
+      <div className="relative">
+        <div className="fixed top-4 right-4 z-[70] hidden sm:block">
+          <button
+            type="button"
+            onClick={() => setActiveNav('inbox')}
+            className="flex items-center gap-2 bg-[#2B4C3F] text-[#FBF9F5] px-4 py-2 rounded-full shadow-lg text-sm font-medium hover:bg-[#E05A30] transition-colors cursor-pointer"
+          >
+            <span>Launch Workspace</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+        <LandingPage onEnterWorkspace={() => setActiveNav('inbox')} />
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell flex min-h-screen bg-cream-100 text-charcoal-900 font-sans">
       <Sidebar 
         activeNav={activeNav} 
         setActiveNav={setActiveNav} 
-        inboxCount={workspace.draft ? 1 : 1} 
+        inboxCount={workspace.draft ? 1 : 0}
         onOpenWisprModal={() => setShowWisprModal(true)} 
       />
       <div className="flex-1 min-w-0 pb-28">
@@ -176,7 +189,7 @@ export default function App() {
         <main className="px-4 sm:px-8 py-6 max-w-7xl mx-auto">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5 text-xs text-charcoal-100">
             <span>
-              {engineStatus === 'live-ai' ? '🟢 Live AI available' : engineStatus === 'checking' ? 'Checking AI availability…' : '⚡ Offline rules & Supabase ready'} · Rules handle conflicts and commands · Saved in this browser
+              {engineStatus === 'live-ai' ? 'AI key configured; extraction verified per meeting' : engineStatus === 'checking' ? 'Checking AI configuration…' : 'Offline rules available'} · Rules handle conflicts and commands · Saved in this browser
             </span>
             <button className="action-button" onClick={() => setShowExportModal(true)}>
               Export workspace
@@ -199,16 +212,6 @@ export default function App() {
               workspace={workspace} 
               conflictCount={conflicts.filter(c => !workspace.resolutions[c.id]).length} 
               onNavigate={setActiveNav} 
-            />
-          )}
-
-          {/* VIEW: INBOX (The Exact Winning Editorial Decision Screen) */}
-          {activeNav === 'inbox' && (
-            <DecisionDetailView
-              onBack={() => setActiveNav('decision_log')}
-              onReplaceEarlierDecision={handleReplaceDecisionDetail}
-              onKeepBoth={() => setFeedback('Kept both decisions with dual-track notation.')}
-              onRevisitLater={() => setFeedback('Decision flagged for team retrospective.')}
             />
           )}
 
@@ -244,7 +247,7 @@ export default function App() {
           )}
 
           {/* VIEW: REVIEW (Meeting Review with Disfluency Diff & Risk Radar) */}
-          {activeNav === 'review' && (
+          {['inbox', 'review'].includes(activeNav) && (
             !workspace.draft ? (
               <div className="empty-state">
                 No meeting awaiting review. <button className="action-button" onClick={() => setActiveNav('meetings')}>Process a meeting</button>
@@ -306,7 +309,7 @@ export default function App() {
               <h1 className="font-serif text-3xl">Decision memory & audit trail</h1>
               <DecisionMap ledger={workspace.ledger} tasks={workspace.tasks} />
               <p className="text-sm">
-                {workspace.ledger.filter(d => d.status === 'active').length} active agreements · {workspace.tasks.length} saved tasks. History is stored in this browser & Supabase.
+                {workspace.ledger.filter(d => d.status === 'active').length} active agreements · {workspace.tasks.length} saved tasks. History is restored from this browser. Cloud restore is not yet available.
               </p>
               {workspace.audit.filter(matches).slice().reverse().map(e => (
                 <article className="notice" key={e.id}>

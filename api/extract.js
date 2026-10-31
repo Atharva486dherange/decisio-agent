@@ -1,4 +1,5 @@
 import { extractMeetingData } from '../server/geminiService.js';
+export const maxDuration = 60;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
