@@ -1,0 +1,12 @@
+import React, { useState } from 'react';
+import { X, Copy, Download } from 'lucide-react';
+import { exportWorkspace } from '../../shared/export';
+export default function ExportModal({ isOpen, onClose, tasks, decisions, summary }) {
+  const [format, setFormat] = useState('slack');
+  const [feedback, setFeedback] = useState('');
+  if (!isOpen) return null;
+  const content = exportWorkspace(format, { tasks, decisions, summary });
+  async function copy() { try { await navigator.clipboard.writeText(content); setFeedback('Copied to clipboard.'); } catch { setFeedback('Clipboard unavailable. Select and copy the text manually, or download.'); } }
+  function download() { const url = URL.createObjectURL(new Blob([content], { type: format === 'json' ? 'application/json' : 'text/plain;charset=utf-8' })); const a = document.createElement('a'); a.href = url; a.download = `decisio-${format}.${format === 'json' ? 'json' : 'md'}`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+  return <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="export-title" onKeyDown={e => { if (e.key === 'Escape') onClose(); }}><section className="paper-card export-panel"><header className="card-header"><h2 id="export-title">Take your next steps with you</h2><button autoFocus aria-label="Close export" onClick={onClose}><X size={19} /></button></header><div className="p-5 space-y-4"><label className="text-xs">Export format<select aria-label="Export format" className="field mt-2" value={format} onChange={e => { setFormat(e.target.value); setFeedback(''); }}><option value="slack">Slack digest</option><option value="linear">Jira / Linear markdown table</option><option value="personal">Team member digests</option><option value="json">Structured JSON</option></select></label><p className="text-xs text-charcoal-50">Exports include active decisions and tasks that have not been rejected. They do not send anything to external apps.</p><textarea aria-label="Export content" className="transcript-field export-content" readOnly rows={13} value={content} />{feedback && <p role="status" className="notice">{feedback}</p>}<div className="flex justify-end gap-2"><button className="action-button secondary" onClick={download}><Download size={15} /> Download</button><button className="action-button" onClick={copy}><Copy size={15} /> Copy</button></div></div></section></div>;
+}
