@@ -45,6 +45,49 @@ export const initialLedger = [
   }
 ];
 
+export const initialTasks = [
+  {
+    id: "task-seed-001",
+    task: "Usability audit for 1-step checkout prototype",
+    owner: "Alex",
+    deadline: "Nov 5, 2026",
+    dueAt: new Date(Date.now() + 86400000 * 4).toISOString(),
+    priority: "Medium",
+    status: "todo",
+    reviewStatus: "approved",
+    meetingTitle: "UX & Conversion Review",
+    quote: "A single step checkout increases conversion by 18% in our internal usability tests.",
+    decisionIds: ["hist-003"]
+  },
+  {
+    id: "task-seed-002",
+    task: "Draft SOC2 Type II controls checklist",
+    owner: "Priya",
+    deadline: "Tomorrow 5 PM",
+    dueAt: new Date(Date.now() + 3600000 * 20).toISOString(),
+    reminderHours: 24,
+    priority: "High",
+    status: "in_progress",
+    reviewStatus: "approved",
+    meetingTitle: "Security & Compliance Check",
+    quote: "We cannot enable live credit card transactions without the compliance signoff.",
+    decisionIds: ["hist-004"]
+  },
+  {
+    id: "task-seed-003",
+    task: "Stripe Connect merchant onboarding setup",
+    owner: "Rahul",
+    deadline: "Oct 24, 2026",
+    dueAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    priority: "High",
+    status: "done",
+    reviewStatus: "approved",
+    meetingTitle: "Sprint 12 Commitment Sync",
+    quote: "Let's stick strictly to Stripe for V1 so we don't blow past the Nov 15 deadline.",
+    decisionIds: ["hist-002"]
+  }
+];
+
 export const demoScenarios = [
   {
     id: "scenario-launch-conflict",

@@ -13,7 +13,7 @@ import VoiceFloatingBar from './components/VoiceFloatingBar';
 import WisprModal from './components/WisprModal';
 import ExportModal from './components/ExportModal';
 import LandingPage from './components/LandingPage';
-import { initialLedger, demoScenarios } from './data/seedData';
+import { initialLedger, initialTasks, demoScenarios } from './data/seedData';
 import { checkServerHealth, extractMeetingData, executeVoiceCommand } from './services/api';
 import { syncDecisionToSupabase, syncTasksToSupabase } from './services/supabaseClient';
 import { newId, applyMutations, detectRuleConflicts, commitReview } from '../shared/engine';
@@ -21,7 +21,7 @@ import { newId, applyMutations, detectRuleConflicts, commitReview } from '../sha
 const STORAGE_KEY = 'decisio.workspace.v2';
 const fresh = () => ({ 
   ledger: structuredClone(initialLedger), 
-  tasks: [], 
+  tasks: structuredClone(initialTasks), 
   audit: [], 
   draft: null, 
   resolutions: {}, 
@@ -34,7 +34,7 @@ function loadWorkspace() {
   try { 
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); 
     if (saved && Array.isArray(saved.ledger) && Array.isArray(saved.tasks) && Array.isArray(saved.audit)) {
-      return { ...fresh(), ...saved }; 
+      return { ...fresh(), ...saved, tasks: saved.tasks?.length ? saved.tasks : structuredClone(initialTasks) }; 
     }
   } catch { /* New workspace or inaccessible storage. */ }
   return fresh();
@@ -161,7 +161,7 @@ export default function App() {
   if (activeNav === 'landing') {
     return (
       <div className="relative">
-        <div className="fixed top-4 right-4 z-[70] hidden sm:block">
+        <div className="hidden">
           <button
             type="button"
             onClick={() => setActiveNav('inbox')}
