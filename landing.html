@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decisio • Meeting-to-Execution Agent</title>
+<meta name="description" content="Decisio listens to your meetings, captures every decision, gives each task an owner and a date, and follows up until it’s done.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Decisio • Meeting-to-Execution Agent">
+<meta property="og:description" content="Turn what was said into what gets done.">
+<meta name="theme-color" content="#FBF9F5">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2238%22 cy=%2250%22 r=%2228%22 fill=%22%23E99D34%22/><circle cx=%2262%22 cy=%2250%22 r=%2228%22 fill=%22%232B4C3F%22 opacity=%220.9%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FBF9F5; --ink:#1C1A17; --muted:#6B665D; --line:#E6E0D4;
+  --forest:#2B4C3F; --amber:#E99D34; --ember:#E05A30; --sand:#F2EDE2;
+  --serif:'Instrument Serif',Georgia,'Times New Roman',serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --wrap:min(1180px,92vw);
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{background:var(--cream);color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--ember);color:#fff}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:3px solid var(--forest);outline-offset:3px;border-radius:8px}
+.wrap{width:var(--wrap);margin-inline:auto}
+h1,h2,h3{font-family:var(--serif);font-weight:400;line-height:1;letter-spacing:-.015em}
+
+#bar{position:fixed;top:0;left:0;right:0;height:3px;background:var(--ember);transform:scaleX(0);transform-origin:left;z-index:60}
+nav{position:fixed;inset:0 0 auto 0;z-index:50;padding:16px 0;transition:.4s}
+nav.stuck{background:rgba(251,249,245,.8);backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--line);padding:10px 0}
+nav .wrap{display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:1.7rem}
+.logo svg{width:30px;height:30px}
+.links{display:flex;gap:30px;font-size:.93rem;color:var(--muted)}
+.links a{position:relative;transition:color .2s}
+.links a::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:1.5px;background:var(--ink);transform:scaleX(0);transform-origin:right;transition:transform .5s var(--ease)}
+.links a:hover{color:var(--ink)}.links a:hover::after{transform:scaleX(1);transform-origin:left}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:999px;border:0;background:var(--forest);color:var(--cream);font:500 .95rem var(--sans);cursor:pointer;position:relative;overflow:hidden;transition:transform .4s var(--ease);will-change:transform}
+.btn::before{content:"";position:absolute;inset:0;background:var(--ember);transform:translateY(101%);transition:transform .5s var(--ease)}
+.btn:hover::before{transform:none}
+.btn span{position:relative}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.btn.ghost::before{background:var(--ink)}.btn.ghost:hover{color:var(--cream)}
+
+/* hero */
+.hero{padding:150px 0 70px}
+.hero-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center}
+h1{font-size:clamp(3.2rem,7.2vw,6.4rem)}
+h1 em{font-style:italic;color:var(--forest)}
+.ln{display:block;overflow:hidden;padding:.04em 0 .1em}
+.ln>span{display:inline-block;transform:translateY(112%);animation:up 1.1s var(--ease) forwards}
+.ln:nth-child(2)>span{animation-delay:.1s}.ln:nth-child(3)>span{animation-delay:.2s}
+@keyframes up{to{transform:none}}
+.lede{margin:26px 0 34px;max-width:29em;font-size:1.15rem;color:var(--muted)}
+.lede,.cta{opacity:0;animation:rise 1s var(--ease) forwards}
+.lede{animation-delay:.5s}.cta{animation-delay:.65s;display:flex;gap:12px;flex-wrap:wrap}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.venn{position:relative;width:100%;aspect-ratio:1.28;opacity:0;animation:rise 1s .3s var(--ease) forwards}
+.venn svg{width:100%;height:100%;overflow:visible}
+.venn text{font-family:var(--serif);font-size:25px;fill:var(--ink)}
+#tl{fill:var(--cream);font-size:27px;opacity:0;transition:opacity .8s}
+#tl.on{opacity:1}
+.chip{position:absolute;background:#fff;border:1px solid var(--line);border-radius:14px;padding:9px 14px;font-size:.82rem;font-weight:500;box-shadow:0 18px 30px -18px rgba(43,76,63,.5);opacity:0;transform:translateY(14px) scale(.95);transition:opacity .7s,transform .9s var(--ease)}
+.chip.on{opacity:1;transform:none}
+.chip small{display:block;color:var(--muted);font-weight:400}
+.c1{left:6%;bottom:6%}.c2{right:2%;top:4%}
+
+/* said → done */
+section{padding:110px 0}
+.head{max-width:700px;margin-bottom:60px}
+h2{font-size:clamp(2.4rem,5vw,4.2rem)}
+.head p{margin-top:18px;color:var(--muted);font-size:1.1rem;max-width:32em}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;padding:42px 0;border-top:1px solid var(--line)}
+.said{font-family:var(--serif);font-size:clamp(1.7rem,3vw,2.5rem);line-height:1.15}
+.said mark{color:inherit;background:linear-gradient(var(--amber),var(--amber)) 0 92%/0 .32em no-repeat;transition:background-size 1.1s .3s var(--ease)}
+.row.in .said mark{background-size:100% .32em}
+.task{background:var(--sand);border-radius:20px;padding:22px 24px;display:flex;gap:16px;align-items:flex-start;opacity:0;transform:translateX(40px);transition:opacity .8s .7s,transform 1s .7s var(--ease)}
+.row.in .task{opacity:1;transform:none}
+.dot{flex:none;width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--forest);display:grid;place-items:center;margin-top:2px}
+.dot svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset .6s 1.6s}
+.row.in .dot{animation:fillgreen .4s 1.6s forwards}
+.row.in .dot svg{stroke-dashoffset:0}
+@keyframes fillgreen{to{background:var(--forest)}}
+.task b{display:block;font-weight:600}
+.task small{color:var(--muted);font-size:.9rem}
+
+/* live demo */
+.demo{max-width:1000px;margin-inline:auto;background:#17291F;color:#EFEBE0;border-radius:26px;overflow:hidden;box-shadow:0 50px 90px -40px rgba(43,76,63,.75)}
+.demo-top{display:flex;align-items:center;gap:8px;padding:15px 20px;border-bottom:1px solid rgba(255,255,255,.08);font-size:.85rem;color:#9DB5A6}
+.demo-top b{width:10px;height:10px;border-radius:50%;background:#2E4A3C}
+.demo-top .ttl{margin-left:10px}
+.rec{margin-left:auto;display:flex;align-items:center;gap:8px}
+.rec::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ember);animation:pulse 1.4s infinite}
+.rec.off::before{animation:none;background:#587566}
+@keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
+.demo-body{display:grid;grid-template-columns:1fr 1fr;min-height:430px}
+.pane{padding:26px 28px;display:flex;flex-direction:column;gap:14px}
+.pane+.pane{border-left:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025)}
+.pane h4{font:500 .85rem var(--sans);color:#9DB5A6}
+#chat,#out{display:flex;flex-direction:column;gap:14px}
+.msg{font-size:1rem;line-height:1.55;opacity:0;transform:translateY(8px);transition:opacity .4s,transform .6s var(--ease)}
+.msg.on{opacity:1;transform:none}
+.msg b{color:var(--amber);font-weight:600;margin-right:8px}
+.msg mark{color:inherit;background:linear-gradient(rgba(233,157,52,.5),rgba(233,157,52,.5)) 0 100%/0 42% no-repeat;transition:background-size .8s var(--ease)}
+.msg.hl mark{background-size:100% 42%}
+.item{background:#21392D;border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:14px 18px;opacity:0;transform:translateX(28px) scale(.97);transition:opacity .5s,transform .8s var(--ease)}
+.item.on{opacity:1;transform:none}
+.tag{display:inline-block;font-size:.76rem;font-weight:600;padding:3px 11px;border-radius:99px;margin-bottom:7px}
+.tag.d{background:rgba(233,157,52,.2);color:var(--amber)}
+.tag.t{background:rgba(120,200,160,.18);color:#8FE0B8}
+.item div{font-weight:500}
+.item small{display:block;color:#9DB5A6;margin-top:2px}
+@media(max-width:860px){.demo-body{grid-template-columns:1fr}.pane+.pane{border-left:0;border-top:1px solid rgba(255,255,255,.08)}}
+
+/* feature rows */
+.feat{border-top:1px solid var(--ink)}
+.f{display:grid;grid-template-columns:1fr 1.2fr;gap:40px;padding:34px 22px;border-bottom:1px solid var(--line);position:relative;overflow:hidden;transition:color .5s var(--ease)}
+.f::before{content:"";position:absolute;inset:0;background:var(--forest);transform:scaleY(0);transform-origin:bottom;transition:transform .6s var(--ease);z-index:0}
+.f>*{position:relative;z-index:1}
+.f h3{font-size:clamp(1.9rem,3vw,2.6rem)}
+.f p{color:var(--muted);transition:color .5s;align-self:center}
+.f:hover{color:var(--cream)}.f:hover p{color:#CFE0D6}.f:hover::before{transform:none}
+
+/* marquee */
+.marq{overflow:hidden;background:var(--amber);padding:22px 0;color:var(--ink)}
+.track{display:flex;width:max-content;animation:slide 36s linear infinite;font-family:var(--serif);font-size:clamp(2rem,4vw,3.2rem);white-space:nowrap}
+.track span{padding-right:.6em}.track i{color:var(--forest)}
+@keyframes slide{to{transform:translateX(-50%)}}
+
+/* cta */
+.final{position:relative;background:var(--forest);color:var(--cream);border-radius:36px;padding:110px 6vw;text-align:center;overflow:hidden}
+.final .o{position:absolute;border-radius:50%;width:420px;height:420px;top:50%;margin-top:-210px}
+.final .a{left:-120px;background:var(--amber);opacity:.9;animation:d1 11s ease-in-out infinite alternate}
+.final .b{right:-120px;background:#1E382E;animation:d2 11s ease-in-out infinite alternate}
+@keyframes d1{to{transform:translateX(150px)}}@keyframes d2{to{transform:translateX(-150px)}}
+.final>*:not(.o){position:relative}
+.final h2{max-width:11em;margin:0 auto}
+.final p{margin:22px auto 34px;max-width:30em;color:#CFE0D6;font-size:1.1rem}
+.final .btn{background:var(--cream);color:var(--ink)}
+footer{padding:48px 0;color:var(--muted);font-size:.9rem}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+.rv{opacity:0;transform:translateY(32px);transition:opacity .9s var(--ease),transform 1.1s var(--ease)}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:860px){
+  .links{display:none}
+  .hero-grid,.row,.f{grid-template-columns:1fr;gap:24px}
+  section{padding:80px 0}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav id="nav"><div class="wrap">
+  <a href="#" class="logo" aria-label="Decisio home"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="38" cy="50" r="28" fill="#E99D34"/><circle cx="62" cy="50" r="28" fill="#2B4C3F" opacity=".9"/></svg>Decisio</a>
+  <div class="links"><a href="#said">How it works</a><a href="#features">What it does</a></div>
+  <a href="/#inbox" class="btn mag"><span>Open App →</span></a>
+</div></nav>
+
+<header class="hero"><div class="wrap hero-grid">
+  <div>
+    <h1><span class="ln"><span>Turn what</span></span><span class="ln"><span>was said into</span></span><span class="ln"><span><em>what gets done.</em></span></span></h1>
+    <p class="lede">Decisio listens to your meetings, captures each decision, gives every task an owner and a date, then follows up until it’s finished.</p>
+    <div class="cta"><a href="/#inbox" class="btn mag"><span>Try Decisio</span></a><a href="#said" class="btn ghost mag"><span>See it work</span></a></div>
+  </div>
+  <div class="venn" id="venn">
+    <svg viewBox="0 0 560 437" role="img" aria-label="A meeting circle and an execution circle overlapping to form a decision">
+      <defs><clipPath id="clip"><circle id="cc" cx="280" cy="218" r="150"/></clipPath></defs>
+      <circle id="ca" cx="150" cy="218" r="150" fill="#E99D34"/>
+      <circle id="cb" cx="410" cy="218" r="150" fill="#2B4C3F" opacity=".92"/>
+      <circle id="cl" cx="150" cy="218" r="150" fill="#E05A30" clip-path="url(#clip)" opacity="0"/>
+      <text id="ta" x="95" y="226" text-anchor="middle">Meeting</text>
+      <text id="tb" x="465" y="226" text-anchor="middle" style="fill:#FBF9F5">Execution</text>
+      <text id="tl" x="280" y="226" text-anchor="middle">Decision</text>
+    </svg>
+    <div class="chip c1" id="c1">Ship pricing page<small>Maya · Friday</small></div>
+    <div class="chip c2" id="c2">Legal sign-off<small>Sam · today</small></div>
+  </div>
+</div></header>
+
+<div class="marq" aria-hidden="true"><div class="track" id="track"></div></div>
+
+<section id="said"><div class="wrap">
+  <div class="head rv"><h2>Every line that matters, caught and owned.</h2><p>Decisio separates decisions from discussion, then turns each commitment into a task someone is accountable for.</p></div>
+  <div class="demo rv" id="demo" aria-label="Animated example of Decisio turning a meeting into decisions and tasks">
+    <div class="demo-top"><b></b><b></b><b></b><span class="ttl">Product sync</span><span class="rec" id="rec">Listening</span></div>
+    <div class="demo-body">
+      <div class="pane"><h4>Conversation</h4><div id="chat"></div></div>
+      <div class="pane"><h4>Decisio captured</h4><div id="out"></div></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="features" style="padding-top:20px"><div class="wrap">
+  <div class="head rv"><h2>Built for what happens after the meeting.</h2></div>
+  <div class="feat rv">
+    <div class="f"><h3>Decisions on the record</h3><p>Each decision is logged with who made it and why, so nobody has to ask whether it was agreed.</p></div>
+    <div class="f"><h3>One owner, one date</h3><p>“We should” becomes a name and a deadline, taken from what people actually said.</p></div>
+    <div class="f"><h3>Follow-up that sticks</h3><p>Owners get a nudge before things slip, and the next meeting opens with what’s still open.</p></div>
+    <div class="f"><h3>Works where you work</h3><p>Tasks go to the tools your team already uses, so nothing has to be copied by hand.</p></div>
+  </div>
+</div></section>
+
+<section id="start" style="padding-top:0"><div class="wrap">
+  <div class="final rv"><span class="o a"></span><span class="o b"></span>
+    <h2>Make the next meeting count.</h2>
+    <p>Stop losing decisions in chat threads. Let Decisio turn the conversation into finished work.</p>
+    <a href="/#inbox" class="btn mag"><span>Start with Decisio</span></a>
+  </div>
+</div></section>
+
+<footer><div class="wrap"><span>© 2026 Decisio</span><span>Meeting-to-Execution Agent</span></div></footer>
+
+<script>
+(function(){
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $=function(s){return document.querySelector(s)},$$=function(s){return [].slice.call(document.querySelectorAll(s))};
+
+  var words=['Decided','Assigned','Tracked','Done'];
+  var seq=words.map(function(w){return '<span>'+w+' <i>●</i></span>'}).join('');
+  $('#track').innerHTML=seq+seq+seq+seq;
+
+  var bar=$('#bar'),nav=$('#nav');
+  function sc(){var m=document.documentElement.scrollHeight-innerHeight;
+    bar.style.transform='scaleX('+(m>0?scrollY/m:0)+')';nav.classList.toggle('stuck',scrollY>20)}
+  addEventListener('scroll',sc,{passive:true});sc();
+
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.25});
+  $$('.rv,.row').forEach(function(el){io.observe(el)});
+
+  if(!reduce&&matchMedia('(hover:hover)').matches){
+    $$('.mag').forEach(function(b){
+      b.addEventListener('pointermove',function(e){var r=b.getBoundingClientRect();
+        b.style.transform='translate('+(e.clientX-r.left-r.width/2)*.2+'px,'+(e.clientY-r.top-r.height/2)*.3+'px)'});
+      b.addEventListener('pointerleave',function(){b.style.transform=''})});
+  }
+
+  /* hero: the two circles converge into a decision */
+  var ca=$('#ca'),cb=$('#cb'),cc=$('#cc'),cl=$('#cl'),ta=$('#ta'),tb=$('#tb'),tl=$('#tl');
+  function set(d,px){
+    var A=280-d+px,B=280+d+px;
+    ca.setAttribute('cx',A);cb.setAttribute('cx',B);cc.setAttribute('cx',B);cl.setAttribute('cx',A);
+    ta.setAttribute('x',A-55);tb.setAttribute('x',B+55);tl.setAttribute('x',280+px);
+  }
+  function finish(){cl.setAttribute('opacity','1');tl.classList.add('on');
+    setTimeout(function(){$('#c1').classList.add('on')},200);setTimeout(function(){$('#c2').classList.add('on')},650)}
+  var D0=130,D1=62,px=0,tx=0;
+  if(reduce){set(D1,0);finish()}else{
+    set(D0,0);
+    var t0=null,dur=2000,delay=700,ease=function(t){return t===1?1:1-Math.pow(2,-10*t)},done=false;
+    (function tick(ts){
+      if(t0===null)t0=ts;var t=Math.max(0,Math.min(1,(ts-t0-delay)/dur));
+      set(D0+(D1-D0)*ease(t),px);
+      if(t>=.55&&!done){done=true;finish()}
+      requestAnimationFrame(tick);
+    })(performance.now());
+    $('#venn').addEventListener('pointermove',function(e){var r=this.getBoundingClientRect();tx=((e.clientX-r.left)/r.width-.5)*30});
+    $('#venn').addEventListener('pointerleave',function(){tx=0});
+    (function sm(){px+=(tx-px)*.06;requestAnimationFrame(sm)})();
+  }
+
+  /* live demo: conversation becomes decisions and tasks, starts in view */
+  var script=[
+    {w:'Maya',t:'Let’s ship the new pricing page on Friday.',hl:'ship the new pricing page on Friday',o:['d','Ship pricing page','Decision · Friday']},
+    {w:'Dev',t:'I can write the copy by Thursday, but we need legal first.',hl:'write the copy by Thursday',o:['t','Write pricing page copy','Dev · due Thursday']},
+    {w:'Sam',t:'I’ll ask legal for sign-off today.',hl:'ask legal for sign-off today',o:['t','Get legal sign-off','Sam · due today']},
+    {w:'Maya',t:'And we’re dropping the annual-only plan.',hl:'dropping the annual-only plan',o:['d','Drop annual-only plan','Decision · agreed']}
+  ];
+  var chat=$('#chat'),out=$('#out'),rec=$('#rec');
+  var sleep=function(ms){return new Promise(function(r){setTimeout(r,reduce?0:ms)})};
+  var esc=function(x){return x.replace(/&/g,'&amp;').replace(/</g,'&lt;')};
+  async function play(){
+    for(;;){
+      chat.innerHTML='';out.innerHTML='';rec.classList.remove('off');rec.textContent='Listening';
+      for(var i=0;i<script.length;i++){
+        var l=script[i],el=document.createElement('div');el.className='msg';chat.appendChild(el);
+        await sleep(60);el.classList.add('on');
+        var typed='';
+        if(!reduce){for(var c=0;c<l.t.length;c++){typed+=l.t[c];el.innerHTML='<b>'+l.w+'</b>'+esc(typed);await sleep(16)}}
+        el.innerHTML='<b>'+l.w+'</b>'+esc(l.t).replace(esc(l.hl),'<mark>'+esc(l.hl)+'</mark>');
+        await sleep(200);el.classList.add('hl');
+        var it=document.createElement('div');it.className='item';
+        it.innerHTML='<span class="tag '+l.o[0]+'">'+(l.o[0]==='d'?'Decision':'Action')+'</span><div>'+l.o[1]+'</div><small>'+l.o[2]+'</small>';
+        out.appendChild(it);await sleep(80);it.classList.add('on');await sleep(900);
+      }
+      rec.classList.add('off');rec.textContent='Meeting ended · 4 items captured';
+      if(reduce)return;
+      await sleep(5000);
+    }
+  }
+  var started=false;
+  new IntersectionObserver(function(es,ob){if(es[0].isIntersecting&&!started){started=true;ob.disconnect();play()}},{threshold:.35}).observe($('#demo'));
+})();
+</script>
+</body>
+</html>
