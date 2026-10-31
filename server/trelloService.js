@@ -13,16 +13,27 @@ export function prepareCard(task) {
 export function trelloClient(env, request = fetch) {
   if (!trackerConfigured(env)) throw new Error('Trello is not connected. Configure the server credentials and destination list.');
   async function call(path, options = {}) {
+    let failure = 'Trello request failed. Check account access and connection settings.';
     try {
       const key = env.TRELLO_API_KEY.trim();
       const token = tokenFor(env);
-      if (!/^[a-zA-Z0-9_-]+$/.test(key) || !/^[a-zA-Z0-9_-]+$/.test(token)) throw new Error('Invalid credentials');
+      if (!/^[a-zA-Z0-9_-]+$/.test(key) || !/^[a-zA-Z0-9_-]+$/.test(token)) {
+        failure = 'Trello credentials contain invalid characters. Save only the raw key and token values.';
+        throw new Error('Invalid credentials');
+      }
       const response = await request(`https://api.trello.com/1${path}`, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `OAuth oauth_consumer_key="${key}", oauth_token="${token}"` }, signal: AbortSignal.timeout(15000) });
-      if (!response.ok) throw new Error('Provider rejected request');
+      if (!response.ok) {
+        failure = response.status === 401 ? 'Trello rejected the API key or token. Verify they belong to the same app and the token is active.'
+          : response.status === 403 ? 'The Trello token does not have permission to access this destination.'
+          : response.status === 404 ? 'Trello could not find the destination list or it is not visible to this account.'
+          : response.status === 429 ? 'Trello rate limit reached. Retry shortly.'
+          : 'Trello is unavailable or rejected the request. Check connection settings.';
+        throw new Error('Provider rejected request');
+      }
       return await response.json();
     } catch {
       // Header/network errors can contain the Authorization value. Never relay them.
-      throw new Error('Trello request failed. Check account access and connection settings.');
+      throw new Error(failure);
     }
   }
   return {

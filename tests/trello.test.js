@@ -2,6 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { prepareCard, trackerConfigured, trelloClient, trackerRequest } from '../server/trelloService.js';
 const env = { TRELLO_API_KEY: 'test-key', TRELLO_TOKEN: 'test-token', TRELLO_LIST_ID: 'a'.repeat(24) };
+test('provider status distinguishes invalid credentials from inaccessible lists without returning provider text', async () => {
+  for (const [status, expected] of [[401, /rejected the API key or token/], [403, /permission/], [404, /destination list/]]) {
+    const result = await trackerRequest('status', {}, env, async () => new Response('private-provider-response', { status }));
+    assert.match(result.body.error, expected);
+    assert.doesNotMatch(result.body.error, /private-provider-response/);
+  }
+});
 test('replacement token setting works and takes precedence over the legacy token', async () => {
   let header;
   const replacement = { ...env, Trello_Tokens: 'replacement-token\n' };
