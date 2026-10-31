@@ -159,21 +159,7 @@ export default function App() {
   }
 
   if (activeNav === 'landing') {
-    return (
-      <div className="relative">
-        <div className="hidden">
-          <button
-            type="button"
-            onClick={() => setActiveNav('inbox')}
-            className="flex items-center gap-2 bg-[#2B4C3F] text-[#FBF9F5] px-4 py-2 rounded-full shadow-lg text-sm font-medium hover:bg-[#E05A30] transition-colors cursor-pointer"
-          >
-            <span>Launch Workspace</span>
-            <span aria-hidden="true">→</span>
-          </button>
-        </div>
-        <LandingPage onEnterWorkspace={() => setActiveNav('inbox')} />
-      </div>
-    );
+    return <LandingPage onEnterWorkspace={() => setActiveNav('inbox')} />;
   }
 
   return (
