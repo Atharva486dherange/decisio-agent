@@ -1,6 +1,8 @@
 // Server-only adapter. No cards are created without explicit confirmation.
+// Prefer the user's replacement token setting over the legacy setting.
+const tokenFor = env => (env.Trello_Tokens || env.TRELLO_TOKEN || '').trim();
 export function trackerConfigured(env) {
-  return Boolean(env.TRELLO_API_KEY && env.TRELLO_TOKEN && /^[a-f0-9]{24}$/i.test(env.TRELLO_LIST_ID || ''));
+  return Boolean(env.TRELLO_API_KEY && tokenFor(env) && /^[a-f0-9]{24}$/i.test(env.TRELLO_LIST_ID || ''));
 }
 export function prepareCard(task) {
   if (!task || typeof task.id !== 'string' || !/^[\w-]{1,100}$/.test(task.id) || typeof task.task !== 'string' || !task.task.trim() || task.task.length > 500) throw new Error('A saved task with a valid title is required.');
@@ -13,7 +15,7 @@ export function trelloClient(env, request = fetch) {
   async function call(path, options = {}) {
     try {
       const key = env.TRELLO_API_KEY.trim();
-      const token = env.TRELLO_TOKEN.trim();
+      const token = tokenFor(env);
       if (!/^[a-zA-Z0-9_-]+$/.test(key) || !/^[a-zA-Z0-9_-]+$/.test(token)) throw new Error('Invalid credentials');
       const response = await request(`https://api.trello.com/1${path}`, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `OAuth oauth_consumer_key="${key}", oauth_token="${token}"` }, signal: AbortSignal.timeout(15000) });
       if (!response.ok) throw new Error('Provider rejected request');

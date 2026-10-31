@@ -2,6 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { prepareCard, trackerConfigured, trelloClient, trackerRequest } from '../server/trelloService.js';
 const env = { TRELLO_API_KEY: 'test-key', TRELLO_TOKEN: 'test-token', TRELLO_LIST_ID: 'a'.repeat(24) };
+test('replacement token setting works and takes precedence over the legacy token', async () => {
+  let header;
+  const replacement = { ...env, Trello_Tokens: 'replacement-token\n' };
+  assert.equal(trackerConfigured({ ...replacement, TRELLO_TOKEN: undefined }), true);
+  await trelloClient(replacement, async (_url, options) => {
+    header = options.headers.Authorization;
+    return Response.json({ id: env.TRELLO_LIST_ID, name: 'To Do', closed: false });
+  }).destination();
+  assert.ok(header.includes('replacement-token'));
+  assert.ok(!header.includes('test-token'));
+  assert.ok(!header.includes('\n'));
+});
 const task = { id: 'task-one', task: 'Prepare release notes', owner: 'Alex', deadline: 'Friday', reviewStatus: 'approved', quote: 'I will prepare release notes.' };
 test('provider exceptions cannot expose credentials through tracker errors', async () => {
   const result = await trackerRequest('status', {}, env, async () => { throw new Error(`Authorization: ${env.TRELLO_TOKEN}`); });
