@@ -6,7 +6,7 @@ export async function checkServerHealth() {
 export async function extractMeetingData(transcript) {
   validateTranscript(transcript);
   try {
-    const res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript }), signal: AbortSignal.timeout(25000) });
+    const res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript }), signal: AbortSignal.timeout(50000) });
     if (res.ok) { const data = await res.json(); if (Array.isArray(data.decisions) && Array.isArray(data.actionItems)) return data; }
   } catch { /* The fallback result explicitly identifies its limits. */ }
   return { ...extractWithRules(transcript), warning: 'Live AI is unavailable. These are limited offline proposals; review against the transcript.' };
